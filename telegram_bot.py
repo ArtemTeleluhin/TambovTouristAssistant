@@ -1,7 +1,7 @@
 from aiogram import Bot, Dispatcher, executor, types
 from db_manager import DBManager, ArticlesQueue
 from work_with_static_api import draw_map
-from telegram_token import TOKEN  # токе скрыт в целях безопасности
+from telegram_token import TOKEN  # токен скрыт в целях безопасности
 
 START_TEXT = "Привет. Я бот, который может найти ближайшие к вам достопримечательности. Для этого скиньте мне свою геопозицию. Используйте команду /help, если возникнут вопросы"
 HELP_TEXT = """Для работы бота необходимо скинуть ему свою геопозицию. Для этого нажмите на значок скрепки (рядом с микрофоном) и выберете геопозицию.
