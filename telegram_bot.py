@@ -1,5 +1,6 @@
 from aiogram import Bot, Dispatcher, executor, types
-from db_manager import DBManager, ArticlesQueue
+from db_manager import DBManager
+from articles_queue import ArticlesQueue
 from work_with_static_api import draw_map
 from telegram_token import TOKEN  # токен скрыт в целях безопасности
 
