@@ -1,5 +1,5 @@
 from aiogram import Bot, Dispatcher, executor, types
-from db_manager import DBManager
+from db_csv_manager import DBManager
 from articles_queue import ArticlesQueue
 from work_with_static_api import draw_map
 from telegram_token import TOKEN  # токен скрыт в целях безопасности
@@ -17,7 +17,7 @@ HELP_TEXT = """Для работы бота необходимо скинуть 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 
-db_manager = DBManager('TouristAssistant/attractions_base.db')
+db_manager = DBManager('attractions_list.csv')
 
 users_queue = dict()
 
@@ -28,7 +28,7 @@ async def start(message: types.Message):
 
 
 @dp.message_handler(commands=["help"])
-async def start(message: types.Message):
+async def bot_help(message: types.Message):
     await bot.send_message(message.from_user.id, HELP_TEXT)
 
 
@@ -38,56 +38,56 @@ async def get_location(message: types.Message):
     users_queue[message.from_user.id] = ArticlesQueue(result_list, message.location.latitude,
                                                       message.location.longitude)
     element = users_queue[message.from_user.id].get_current_element()
-    distance = round(element[-1] * 1000.0)
-    article_name = element[1]
-    article_url = element[2].replace('"', '&apos;')
+    distance = round(element['dist'] * 1000.0)
+    article_name = element['title']
+    article_url = element['url'].replace('"', '&apos;')
     await bot.send_message(message.from_user.id,
                            f'<a href="{article_url}">{article_name}</a>' + '\n' + f'{str(distance)} метров от вас',
                            parse_mode=types.ParseMode.HTML)
 
 
 @dp.message_handler(commands=["next"])
-async def start(message: types.Message):
+async def get_next(message: types.Message):
     if message.from_user.id not in users_queue:
         await bot.send_message(message.from_user.id, "Вы не дали свою геопозицию")
     elif users_queue[message.from_user.id].is_last():
         await bot.send_message(message.from_user.id, "Это последний известный мне объект")
     else:
         element = users_queue[message.from_user.id].next_element()
-        distance = round(element[-1] * 1000.0)
-        article_name = element[1]
-        article_url = element[2].replace('"', '&apos;')
+        distance = round(element['dist'] * 1000.0)
+        article_name = element['title']
+        article_url = element['url'].replace('"', '&apos;')
         await bot.send_message(message.from_user.id,
                                f'<a href="{article_url}">{article_name}</a>' + '\n' + f'{str(distance)} метров от вас',
                                parse_mode=types.ParseMode.HTML)
 
 
 @dp.message_handler(commands=["prev"])
-async def start(message: types.Message):
+async def get_prev(message: types.Message):
     if message.from_user.id not in users_queue:
         await bot.send_message(message.from_user.id, "Вы не дали свою геопозицию")
     elif users_queue[message.from_user.id].is_first():
         await bot.send_message(message.from_user.id, "Перед этим объектом в списке ничего нет")
     else:
         element = users_queue[message.from_user.id].prev_element()
-        distance = round(element[-1] * 1000.0)
-        article_name = element[1]
-        article_url = element[2].replace('"', '&apos;')
+        distance = round(element['dist'] * 1000.0)
+        article_name = element['title']
+        article_url = element['url'].replace('"', '&apos;')
         await bot.send_message(message.from_user.id,
                                f'<a href="{article_url}">{article_name}</a>' + '\n' + f'{str(distance)} метров от вас',
                                parse_mode=types.ParseMode.HTML)
 
 
 @dp.message_handler(commands=["top_5"])
-async def start(message: types.Message):
+async def top_5(message: types.Message):
     if message.from_user.id not in users_queue:
         await bot.send_message(message.from_user.id, "Вы не дали свою геопозицию")
     else:
         articles_list = []
         for element in users_queue[message.from_user.id].get_top_articles(5):
-            distance = round(element[-1] * 1000.0)
-            article_name = element[1]
-            article_url = element[2].replace('"', '&apos;')
+            distance = round(element['dist'] * 1000.0)
+            article_name = element['title']
+            article_url = element['url'].replace('"', '&apos;')
             articles_list.append(
                 f'<a href="{article_url}">{article_name}</a>' + ' - ' + f'{str(distance)} метров от вас'
             )
@@ -95,18 +95,19 @@ async def start(message: types.Message):
 
 
 @dp.message_handler(commands=["show_map"])
-async def start(message: types.Message):
+async def show_map(message: types.Message):
     if message.from_user.id not in users_queue:
         await bot.send_message(message.from_user.id, "Вы не дали свою геопозицию")
     elif users_queue[message.from_user.id].is_top_last():
         articles_cords = []
         for element in users_queue[message.from_user.id].get_top_articles(5):
-            articles_cords.append((element[3], element[4]))
+            articles_cords.append((element['latitude'], element['longitude']))
         photo = draw_map(users_queue[message.from_user.id].get_user_cords(), *articles_cords)
         await bot.send_photo(message.from_user.id, photo)
     else:
         element = users_queue[message.from_user.id].get_current_element()
-        photo = draw_map(users_queue[message.from_user.id].get_user_cords(), (element[3], element[4]))
+        photo = draw_map(users_queue[message.from_user.id].get_user_cords(),
+                         (element['latitude'], element['longitude']))
         await bot.send_photo(message.from_user.id, photo)
 
 
