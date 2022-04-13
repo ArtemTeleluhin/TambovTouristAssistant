@@ -6,7 +6,7 @@ from copy import deepcopy
 class DBManager:
     def __init__(self, csv_name):
         self.data = []
-        with open(csv_name) as file:
+        with open(csv_name, encoding='utf-8') as file:
             reader = csv.DictReader(file)
             self.data = [dict(elem) for elem in reader]
         for elem in self.data:
